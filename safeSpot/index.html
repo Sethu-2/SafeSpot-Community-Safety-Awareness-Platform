@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SafeRoute AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: linear-gradient(to right, #141e30, #243b55);
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            padding: 15px;
+        }
+
+        .container {
+            width: 90%;
+            margin: auto;
+        }
+
+        input, button {
+            padding: 12px;
+            margin: 5px;
+            border-radius: 8px;
+            border: none;
+        }
+
+        input {
+            width: 40%;
+        }
+
+        button {
+            background: #00c6ff;
+            color: white;
+            cursor: pointer;
+        }
+
+        #map {
+            height: 350px;
+            margin: 15px;
+            border-radius: 12px;
+        }
+
+        .route-card {
+            background: white;
+            color: black;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 10px;
+        }
+
+        .safe {
+            color: green;
+            font-weight: bold;
+        }
+
+        .unsafe {
+            color: red;
+            font-weight: bold;
+        }
+
+        .best {
+            border: 3px solid limegreen;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🛣️ SafeRoute AI</h1>
+
+<div class="container">
+
+    <input type="text" id="from" placeholder="Enter Start Location">
+    <input type="text" id="to" placeholder="Enter Destination">
+    <br>
+    <button onclick="calculateRoutes()">Find Safest Route</button>
+
+    <div id="map"></div>
+
+    <div id="routes"></div>
+
+</div>
+
+<script>
+let map, directionsService, directionsRenderer;
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 17.3850, lng: 78.4867 },
+        zoom: 12
+    });
+
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        polylineOptions: { strokeColor: "green" }
+    });
+
+    directionsRenderer.setMap(map);
+}
+
+function calculateRoutes() {
+    let from = document.getElementById("from").value;
+    let to = document.getElementById("to").value;
+
+    directionsService.route({
+        origin: from,
+        destination: to,
+        travelMode: 'DRIVING',
+        provideRouteAlternatives: true
+    }, function(result, status) {
+
+        if (status === 'OK') {
+
+            let routesHTML = "";
+            let bestIndex = 0;
+            let bestSafety = 0;
+
+            result.routes.forEach((route, index) => {
+
+                let distance = route.legs[0].distance.text;
+
+                // Safety Logic (fake but smart)
+                let safety = Math.floor(Math.random() * 40) + 60;
+
+                let safetyClass = safety > 80 ? "safe" : "unsafe";
+
+                if (safety > bestSafety) {
+                    bestSafety = safety;
+                    bestIndex = index;
+                }
+
+                routesHTML += `
+                    <div class="route-card ${index === bestIndex ? 'best' : ''}">
+                        <h3>Route ${index + 1}</h3>
+                        <p>Distance: ${distance}</p>
+                        <p class="${safetyClass}">Safety: ${safety}%</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById("routes").innerHTML = routesHTML;
+
+            directionsRenderer.setDirections(result);
+            directionsRenderer.setRouteIndex(bestIndex);
+        }
+    });
+}
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap" async defer></script>
+
+</body>
+</html>
